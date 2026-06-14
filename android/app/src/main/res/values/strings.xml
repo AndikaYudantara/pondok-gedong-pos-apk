@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">pondok_gedong_app</string>
+    <string name="title_activity_main">pondok_gedong_app</string>
+    <string name="package_name">com.pondok.gedong.app</string>
+    <string name="custom_url_scheme">com.pondok.gedong.app</string>
+</resources>
