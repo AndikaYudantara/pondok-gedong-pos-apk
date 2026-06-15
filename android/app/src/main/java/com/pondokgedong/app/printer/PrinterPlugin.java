@@ -249,7 +249,7 @@ public class PrinterPlugin extends Plugin {
 
             outputStream.write(text.getBytes(StandardCharsets.UTF_8));
 
-            outputStream.write("\n\n\n".getBytes());
+            outputStream.write("\n".getBytes());
 
             outputStream.flush();
 
