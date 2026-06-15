@@ -4,12 +4,16 @@ import { formatDateTime, formatRupiah } from "@/lib/pos/format";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
+
 interface ReceiptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   order: Order | null;
   onNewOrder: () => void;
 }
+
+
+
 
 export function ReceiptDialog({ open, onOpenChange, order, onNewOrder }: ReceiptDialogProps) {
   if (!order) return null;

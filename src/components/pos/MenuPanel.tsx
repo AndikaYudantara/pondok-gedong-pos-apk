@@ -1,30 +1,31 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { MENU } from "@/lib/pos/menu";
-import { CATEGORIES, type Category, type MenuItem } from "@/lib/pos/types";
+import { type Category, type MenuItem } from "@/lib/pos/types";
 import { formatRupiah } from "@/lib/pos/format";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 interface MenuPanelProps {
+  menu: MenuItem[];
+  categories: Category[];
   onAdd: (item: MenuItem) => void;
   cartQty: Record<string, number>;
 }
 
-export function MenuPanel({ onAdd, cartQty }: MenuPanelProps) {
+export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) {
   const [active, setActive] = useState<Category | "Semua">("Semua");
   const [query, setQuery] = useState("");
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MENU.filter((m) => {
+    return menu.filter((m) => {
       const matchCat = active === "Semua" || m.category === active;
       const matchQuery = !q || m.name.toLowerCase().includes(q);
       return matchCat && matchQuery;
     });
-  }, [active, query]);
+  }, [menu, active, query]);
 
-  const tabs: (Category | "Semua")[] = ["Semua", ...CATEGORIES];
+  const tabs: (Category | "Semua")[] = ["Semua", ...categories];
 
   return (
     <div className="flex h-full flex-col">
@@ -58,27 +59,62 @@ export function MenuPanel({ onAdd, cartQty }: MenuPanelProps) {
       <div className="no-scrollbar grid flex-1 auto-rows-min grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => {
           const qty = cartQty[item.id] ?? 0;
+          const tracked = item.stock != null;
+          const remaining = tracked ? Math.max(0, (item.stock ?? 0) - qty) : null;
+          const soldOut = tracked && (item.stock ?? 0) <= 0;
+          const reachedMax = tracked && qty >= (item.stock ?? 0);
           return (
             <button
               key={item.id}
+              disabled={soldOut || reachedMax}
               onClick={() => onAdd(item)}
-              className="group relative flex flex-col rounded-2xl border border-border bg-card p-3 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] active:translate-y-0"
+              className={cn(
+                "group relative flex flex-col rounded-2xl border border-border bg-card p-3 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] active:translate-y-0",
+                (soldOut || reachedMax) && "cursor-not-allowed opacity-55 hover:translate-y-0 hover:shadow-[var(--shadow-card)]",
+              )}
             >
               {qty > 0 && (
                 <span className="absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground shadow">
                   {qty}
                 </span>
               )}
-              <div className="mb-2 flex h-20 items-center justify-center rounded-xl bg-secondary text-4xl sm:h-24">
-                <span>{item.emoji}</span>
+              {soldOut && (
+                <span className="absolute left-2 top-2 z-10 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground shadow">
+                  Habis
+                </span>
+              )}
+              <div className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded-xl bg-secondary text-4xl sm:h-24">
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="size-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span>{item.emoji}</span>
+                )}
               </div>
               <span className="line-clamp-2 text-sm font-semibold leading-tight text-card-foreground">
                 {item.name}
               </span>
-              <span className="mt-1 text-sm font-bold text-primary">{formatRupiah(item.price)}</span>
+              <div className="mt-1 flex items-center justify-between gap-1">
+                <span className="text-sm font-bold text-primary">{formatRupiah(item.price)}</span>
+                {tracked && !soldOut && (
+                  <span
+                    className={cn(
+                      "text-[11px] font-medium",
+                      remaining! <= 5 ? "text-destructive" : "text-muted-foreground",
+                    )}
+                  >
+                    sisa {remaining}
+                  </span>
+                )}
+              </div>
             </button>
           );
         })}
+
 
         {items.length === 0 && (
           <div className="col-span-full py-16 text-center text-sm text-muted-foreground">

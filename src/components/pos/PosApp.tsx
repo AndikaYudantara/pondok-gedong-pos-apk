@@ -1,26 +1,25 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, LayoutGrid, Wallet } from "lucide-react";
+import { ClipboardList, LayoutGrid, ShieldCheck } from "lucide-react";
 import logo from "@/assets/logo.png";
 import type { CartLine, MenuItem, Order, PaymentMethod } from "@/lib/pos/types";
 import { formatRupiah } from "@/lib/pos/format";
-import { useOrders } from "@/lib/pos/storage";
+import { useCategories, useMenu, useOrders } from "@/lib/pos/storage";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MenuPanel } from "./MenuPanel";
 import { CartPanel } from "./CartPanel";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { ReceiptDialog } from "./ReceiptDialog";
 import { HistoryView } from "./HistoryView";
-import { ReportView } from "./ReportView";
+import { AdminDashboard } from "./AdminDashboard";
 
-type Tab = "kasir" | "riwayat" | "laporan";
+type Tab = "kasir" | "riwayat" | "admin";
 
 const NAV: { id: Tab; label: string; icon: typeof LayoutGrid }[] = [
   { id: "kasir", label: "Kasir", icon: LayoutGrid },
   { id: "riwayat", label: "Riwayat", icon: ClipboardList },
-  { id: "laporan", label: "Laporan", icon: Wallet },
+  { id: "admin", label: "Admin", icon: ShieldCheck },
 ];
 
 export function PosApp() {
@@ -30,8 +29,19 @@ export function PosApp() {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  const [adminAuthed, setAdminAuthed] = useState(false);
 
   const { orders, addOrder, deleteOrder, nextNumber } = useOrders();
+  const {
+    menu,
+    addItem: addMenuItem,
+    updateItem,
+    deleteItem,
+    setStock,
+    adjustStock,
+    decrementStock,
+  } = useMenu();
+  const { categories, addCategory, renameCategory, deleteCategory } = useCategories();
 
   const subtotal = useMemo(
     () => cart.reduce((s, l) => s + l.item.price * l.qty, 0),
@@ -45,17 +55,35 @@ export function PosApp() {
   }, [cart]);
 
   function addItem(item: MenuItem) {
+    const current = menu.find((m) => m.id === item.id) ?? item;
     setCart((prev) => {
       const existing = prev.find((l) => l.item.id === item.id);
-      if (existing) {
-        return prev.map((l) => (l.item.id === item.id ? { ...l, qty: l.qty + 1 } : l));
+      const inCart = existing?.qty ?? 0;
+      if (current.stock != null && inCart >= current.stock) {
+        toast.error(`Stok ${current.name} tidak mencukupi`);
+        return prev;
       }
-      return [...prev, { item, qty: 1 }];
+      if (existing) {
+        return prev.map((l) =>
+          l.item.id === item.id ? { ...l, item: current, qty: l.qty + 1 } : l,
+        );
+      }
+      return [...prev, { item: current, qty: 1 }];
     });
   }
 
   function inc(id: string) {
-    setCart((prev) => prev.map((l) => (l.item.id === id ? { ...l, qty: l.qty + 1 } : l)));
+    const current = menu.find((m) => m.id === id);
+    setCart((prev) =>
+      prev.map((l) => {
+        if (l.item.id !== id) return l;
+        if (current?.stock != null && l.qty >= current.stock) {
+          toast.error(`Stok ${l.item.name} tidak mencukupi`);
+          return l;
+        }
+        return { ...l, qty: l.qty + 1 };
+      }),
+    );
   }
   function dec(id: string) {
     setCart((prev) =>
@@ -98,6 +126,7 @@ export function PosApp() {
       customer: data.customer,
     };
     addOrder(order);
+    decrementStock(order.lines.map((l) => ({ id: l.id, qty: l.qty })));
     setLastOrder(order);
     setCheckoutOpen(false);
     setReceiptOpen(true);
@@ -141,7 +170,12 @@ export function PosApp() {
         {tab === "kasir" && (
           <>
             <section className="min-w-0 flex-1 overflow-hidden p-4 pb-24 lg:pb-4">
-              <MenuPanel onAdd={addItem} cartQty={cartQty} />
+              <MenuPanel
+                menu={menu}
+                categories={categories}
+                onAdd={addItem}
+                cartQty={cartQty}
+              />
             </section>
             <aside className="hidden w-[22rem] shrink-0 border-l border-border bg-card/40 p-4 lg:flex lg:flex-col">
               <CartPanel
@@ -163,9 +197,23 @@ export function PosApp() {
           </section>
         )}
 
-        {tab === "laporan" && (
+        {tab === "admin" && (
           <section className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
-            <ReportView orders={orders} />
+            <AdminDashboard
+              authed={adminAuthed}
+              onAuth={setAdminAuthed}
+              orders={orders}
+              menu={menu}
+              categories={categories}
+              onAddItem={addMenuItem}
+              onUpdateItem={updateItem}
+              onDeleteItem={deleteItem}
+              onSetStock={setStock}
+              onAdjustStock={adjustStock}
+              onAddCategory={addCategory}
+              onRenameCategory={renameCategory}
+              onDeleteCategory={deleteCategory}
+            />
           </section>
         )}
       </main>

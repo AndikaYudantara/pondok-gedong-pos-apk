@@ -1,10 +1,11 @@
 apply plugin: 'com.android.application'
+implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0'
 
 android {
-    namespace = "com.pondok.gedong.app"
+    namespace = "com.pondokgedong.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.pondok.gedong.app"
+        applicationId "com.pondokgedong.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -28,6 +29,11 @@ repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {

@@ -1,4 +1,4 @@
-export type Category = "Kopi" | "Non-Kopi" | "Makanan" | "Camilan";
+export type Category = string;
 
 export interface MenuItem {
   id: string;
@@ -6,7 +6,11 @@ export interface MenuItem {
   category: Category;
   price: number;
   emoji: string;
+  /** Optional photo as a data URL (uploaded by admin). Falls back to emoji. */
+  image?: string;
   description?: string;
+  /** Available stock. `null`/undefined = stok tidak dilacak (unlimited). */
+  stock?: number | null;
 }
 
 export interface CartLine {
