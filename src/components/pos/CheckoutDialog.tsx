@@ -26,7 +26,7 @@ interface CheckoutDialogProps {
   }) => void;
 }
 
-const QUICK_AMOUNTS = [20000, 50000, 100000, 150000];
+const QUICK_AMOUNTS = [10000, 20000, 50000, 100000, 150000];
 
 export function CheckoutDialog({ open, onOpenChange, total, onConfirm }: CheckoutDialogProps) {
   const [payment, setPayment] = useState<PaymentMethod>("Tunai");
@@ -61,8 +61,7 @@ export function CheckoutDialog({ open, onOpenChange, total, onConfirm }: Checkou
         <DialogHeader>
           <DialogTitle>Pembayaran</DialogTitle>
           <DialogDescription>
-            Total tagihan{" "}
-            <span className="font-bold text-primary">{formatRupiah(total)}</span>
+            Total tagihan <span className="font-bold text-primary">{formatRupiah(total)}</span>
           </DialogDescription>
         </DialogHeader>
 

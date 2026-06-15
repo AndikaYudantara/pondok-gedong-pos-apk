@@ -7,7 +7,20 @@ export interface PrinterPlugin {
       address: string;
     }[];
   }>;
+
+  connect(options: { macAddress: string }): Promise<{
+    connected: boolean;
+  }>;
+
+  printTest(): Promise<void>;
+
+  printReceipt(options: { text: string }): Promise<void>;
+
+  isConnected(): Promise<{
+    connected: boolean;
+  }>;
+
+  disconnect(): Promise<void>;
 }
 
-export const Printer =
-  registerPlugin<PrinterPlugin>("Printer");
+export const Printer = registerPlugin<PrinterPlugin>("Printer");

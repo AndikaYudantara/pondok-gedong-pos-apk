@@ -1,9 +1,13 @@
 import { CheckCircle2, Printer } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { Order } from "@/lib/pos/types";
 import { formatDateTime, formatRupiah } from "@/lib/pos/format";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-
+import { Printer as PrinterPlugin } from "@/plugins/printer";
+import { Preferences } from "@capacitor/preferences";
+import { buildReceipt } from "@/lib/pos/printer";
+import { toast } from "sonner";
 
 interface ReceiptDialogProps {
   open: boolean;
@@ -12,11 +16,54 @@ interface ReceiptDialogProps {
   onNewOrder: () => void;
 }
 
-
-
-
 export function ReceiptDialog({ open, onOpenChange, order, onNewOrder }: ReceiptDialogProps) {
   if (!order) return null;
+
+  const [printing, setPrinting] = useState(false);
+
+  useEffect(() => {
+    if (!open || !order) {
+      return;
+    }
+
+    printReceipt();
+  }, [open, order]);
+
+  async function printReceipt() {
+    if (printing) {
+      return;
+    }
+    try {
+      const mac = await Preferences.get({
+        key: "printer_mac",
+      });
+
+      if (!mac.value) {
+        toast.error("Printer belum terhubung");
+        return;
+      }
+
+      const status = await PrinterPlugin.isConnected();
+
+      if (!status.connected) {
+        await PrinterPlugin.connect({
+          macAddress: mac.value,
+        });
+      }
+
+      await PrinterPlugin.printReceipt({
+        text: buildReceipt(order!),
+      });
+
+      toast.success("Struk berhasil dicetak");
+    } catch (error) {
+      console.error(error);
+
+      toast.error("Gagal mencetak");
+    } finally {
+      setPrinting(false);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,10 +133,12 @@ export function ReceiptDialog({ open, onOpenChange, order, onNewOrder }: Receipt
             variant="outline"
             size="lg"
             className="flex-1"
-            onClick={() => window.print()}
+            onClick={printReceipt}
+            disabled={printing}
           >
             <Printer className="size-4" />
-            Cetak
+
+            {printing ? "Mencetak..." : "Cetak"}
           </Button>
           <Button variant="default" size="lg" className="flex-1" onClick={onNewOrder}>
             Pesanan Baru
