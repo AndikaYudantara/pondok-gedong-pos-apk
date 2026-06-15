@@ -44,8 +44,8 @@ function separator() {
 export function buildReceipt(order: Order) {
   let receipt = "";
 
-  receipt += center("Jl. Gunung Batukaru, Desa Pujungan") + "\n";
-  receipt += center("Kec. Pupuan, Kab. Tabanan, Bali") + "\n";
+  receipt += center("Jl. Gunung Batukaru") + "\n";
+  receipt += center("Desa Pujungan, Bali") + "\n";
   receipt += separator() + "\n";
 
   receipt += leftRight(`#${order.number}`, formatDateTime(order.createdAt)) + "\n";
