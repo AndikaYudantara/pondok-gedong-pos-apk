@@ -1,5 +1,12 @@
 export type Category = string;
 
+export interface MenuVariant {
+  id: string;
+  name: string;
+  /** Added to the base price (can be 0 or negative). */
+  priceDelta: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -11,10 +18,15 @@ export interface MenuItem {
   description?: string;
   /** Available stock. `null`/undefined = stok tidak dilacak (unlimited). */
   stock?: number | null;
+  /** Optional variants (e.g. Panas/Dingin, Reguler/Large). */
+  variants?: MenuVariant[];
 }
 
 export interface CartLine {
+  /** Unique per item + selected variant combination. */
+  key: string;
   item: MenuItem;
+  variant?: MenuVariant;
   qty: number;
   note?: string;
 }

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import type { Category, MenuItem } from "@/lib/pos/types";
+import type { Category, MenuItem, MenuVariant } from "@/lib/pos/types";
 import { formatRupiah } from "@/lib/pos/format";
 import { fileToCompressedDataUrl } from "@/lib/pos/image";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,12 @@ interface MenuManagerProps {
   onDelete: (id: string) => void;
 }
 
+interface DraftVariant {
+  id: string;
+  name: string;
+  price: string;
+}
+
 interface Draft {
   name: string;
   category: Category;
@@ -50,6 +56,7 @@ interface Draft {
   description: string;
   trackStock: boolean;
   stock: string;
+  variants: DraftVariant[];
 }
 
 const emptyDraft = (category: Category): Draft => ({
@@ -61,6 +68,7 @@ const emptyDraft = (category: Category): Draft => ({
   description: "",
   trackStock: true,
   stock: "10",
+  variants: [],
 });
 
 export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: MenuManagerProps) {
@@ -87,8 +95,31 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
       description: item.description ?? "",
       trackStock: item.stock != null,
       stock: item.stock != null ? String(item.stock) : "10",
+      variants: (item.variants ?? []).map((v) => ({
+        id: v.id,
+        name: v.name,
+        price: String(v.priceDelta),
+      })),
     });
     setOpen(true);
+  }
+
+  function addVariant() {
+    setDraft((d) => ({
+      ...d,
+      variants: [...d.variants, { id: crypto.randomUUID(), name: "", price: "0" }],
+    }));
+  }
+
+  function updateVariant(id: string, patch: Partial<DraftVariant>) {
+    setDraft((d) => ({
+      ...d,
+      variants: d.variants.map((v) => (v.id === id ? { ...v, ...patch } : v)),
+    }));
+  }
+
+  function removeVariant(id: string) {
+    setDraft((d) => ({ ...d, variants: d.variants.filter((v) => v.id !== id) }));
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -119,6 +150,13 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
       toast.error("Harga tidak valid");
       return;
     }
+    const variants: MenuVariant[] = draft.variants
+      .map((v) => ({
+        id: v.id,
+        name: v.name.trim(),
+        priceDelta: Number(v.price || "0"),
+      }))
+      .filter((v) => v.name);
     const payload = {
       name,
       category: draft.category,
@@ -127,6 +165,7 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
       image: draft.image,
       description: draft.description.trim() || undefined,
       stock: draft.trackStock ? Number(draft.stock || "0") : null,
+      variants: variants.length ? variants : undefined,
     };
     if (editing) {
       onUpdate(editing.id, payload);
@@ -167,6 +206,11 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
               <p className="truncate font-semibold leading-tight">{item.name}</p>
               <p className="text-xs text-muted-foreground">{item.category}</p>
               <p className="text-sm font-bold text-primary">{formatRupiah(item.price)}</p>
+              {item.variants && item.variants.length > 0 && (
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                  {item.variants.length} varian: {item.variants.map((v) => v.name).join(", ")}
+                </p>
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <Button size="icon" variant="ghost" className="size-8" onClick={() => openEdit(item)}>
@@ -331,6 +375,57 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
                     }
                     placeholder="10"
                   />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-border bg-secondary/40 p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="cursor-default">Varian (opsional)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Selisih harga dari harga dasar (boleh 0 / minus)
+                  </p>
+                </div>
+                <Button type="button" variant="secondary" size="sm" className="gap-1.5" onClick={addVariant}>
+                  <Plus className="size-4" /> Varian
+                </Button>
+              </div>
+              {draft.variants.length > 0 && (
+                <div className="space-y-2">
+                  {draft.variants.map((v) => (
+                    <div key={v.id} className="flex items-center gap-2">
+                      <Input
+                        value={v.name}
+                        onChange={(e) => updateVariant(v.id, { name: e.target.value })}
+                        placeholder="cth. Dingin"
+                        className="flex-1"
+                      />
+                      <div className="relative w-28 shrink-0">
+                        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                          Rp
+                        </span>
+                        <Input
+                          inputMode="numeric"
+                          value={v.price}
+                          onChange={(e) =>
+                            updateVariant(v.id, { price: e.target.value.replace(/[^\d-]/g, "") })
+                          }
+                          placeholder="0"
+                          className="pl-8"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="size-9 shrink-0 text-destructive hover:text-destructive"
+                        onClick={() => removeVariant(v.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

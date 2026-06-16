@@ -1,20 +1,27 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { type Category, type MenuItem } from "@/lib/pos/types";
-import { formatRupiah } from "@/lib/pos/format";
+import { type Category, type MenuItem, type MenuVariant } from "@/lib/pos/types";
+import { formatRupiah, unitPrice } from "@/lib/pos/format";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface MenuPanelProps {
   menu: MenuItem[];
   categories: Category[];
-  onAdd: (item: MenuItem) => void;
+  onAdd: (item: MenuItem, variant?: MenuVariant) => void;
   cartQty: Record<string, number>;
 }
 
 export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) {
   const [active, setActive] = useState<Category | "Semua">("Semua");
   const [query, setQuery] = useState("");
+  const [picking, setPicking] = useState<MenuItem | null>(null);
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -26,6 +33,14 @@ export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) 
   }, [menu, active, query]);
 
   const tabs: (Category | "Semua")[] = ["Semua", ...categories];
+
+  function handleSelect(item: MenuItem) {
+    if (item.variants && item.variants.length > 0) {
+      setPicking(item);
+    } else {
+      onAdd(item);
+    }
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -63,11 +78,12 @@ export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) 
           const remaining = tracked ? Math.max(0, (item.stock ?? 0) - qty) : null;
           const soldOut = tracked && (item.stock ?? 0) <= 0;
           const reachedMax = tracked && qty >= (item.stock ?? 0);
+          const hasVariants = !!item.variants && item.variants.length > 0;
           return (
             <button
               key={item.id}
               disabled={soldOut || reachedMax}
-              onClick={() => onAdd(item)}
+              onClick={() => handleSelect(item)}
               className={cn(
                 "group relative flex flex-col rounded-2xl border border-border bg-card p-3 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] active:translate-y-0",
                 (soldOut || reachedMax) && "cursor-not-allowed opacity-55 hover:translate-y-0 hover:shadow-[var(--shadow-card)]",
@@ -99,7 +115,9 @@ export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) 
                 {item.name}
               </span>
               <div className="mt-1 flex items-center justify-between gap-1">
-                <span className="text-sm font-bold text-primary">{formatRupiah(item.price)}</span>
+                <span className="text-sm font-bold text-primary">
+                  {hasVariants ? `mulai ${formatRupiah(item.price)}` : formatRupiah(item.price)}
+                </span>
                 {tracked && !soldOut && (
                   <span
                     className={cn(
@@ -111,6 +129,11 @@ export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) 
                   </span>
                 )}
               </div>
+              {hasVariants && (
+                <span className="mt-1 inline-flex w-fit rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {item.variants!.length} varian
+                </span>
+              )}
             </button>
           );
         })}
@@ -122,6 +145,31 @@ export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) 
           </div>
         )}
       </div>
+
+      <Dialog open={!!picking} onOpenChange={(o) => !o && setPicking(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Pilih varian · {picking?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {picking?.variants?.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => {
+                  if (picking) onAdd(picking, v);
+                  setPicking(null);
+                }}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:border-primary hover:bg-secondary/50"
+              >
+                <span className="font-semibold">{v.name}</span>
+                <span className="font-bold text-primary">
+                  {formatRupiah(unitPrice(picking, v))}
+                </span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

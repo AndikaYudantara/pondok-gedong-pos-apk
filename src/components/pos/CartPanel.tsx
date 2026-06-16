@@ -1,14 +1,14 @@
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import type { CartLine } from "@/lib/pos/types";
-import { formatRupiah } from "@/lib/pos/format";
+import { formatRupiah, lineUnitPrice } from "@/lib/pos/format";
 import { Button } from "@/components/ui/button";
 
 interface CartPanelProps {
   cart: CartLine[];
   subtotal: number;
-  onInc: (id: string) => void;
-  onDec: (id: string) => void;
-  onRemove: (id: string) => void;
+  onInc: (key: string) => void;
+  onDec: (key: string) => void;
+  onRemove: (key: string) => void;
   onClear: () => void;
   onCheckout: () => void;
 }
@@ -50,7 +50,7 @@ export function CartPanel({
 
         {cart.map((line) => (
           <div
-            key={line.item.id}
+            key={line.key}
             className="flex items-center gap-3 rounded-xl border border-border bg-card p-2.5"
           >
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-xl">
@@ -58,8 +58,13 @@ export function CartPanel({
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{line.item.name}</p>
+              {line.variant && (
+                <p className="truncate text-[11px] font-medium text-accent-foreground/80">
+                  {line.variant.name}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
-                {formatRupiah(line.item.price)} × {line.qty}
+                {formatRupiah(lineUnitPrice(line))} × {line.qty}
               </p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -67,7 +72,7 @@ export function CartPanel({
                 size="icon"
                 variant="secondary"
                 className="size-7 rounded-lg"
-                onClick={() => (line.qty > 1 ? onDec(line.item.id) : onRemove(line.item.id))}
+                onClick={() => (line.qty > 1 ? onDec(line.key) : onRemove(line.key))}
               >
                 {line.qty > 1 ? <Minus /> : <Trash2 className="text-destructive" />}
               </Button>
@@ -76,7 +81,7 @@ export function CartPanel({
                 size="icon"
                 variant="secondary"
                 className="size-7 rounded-lg"
-                onClick={() => onInc(line.item.id)}
+                onClick={() => onInc(line.key)}
               >
                 <Plus />
               </Button>

@@ -11,6 +11,7 @@ import {
   Printer,
   Bluetooth,
   Loader2,
+  DatabaseBackup,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category, MenuItem, Order } from "@/lib/pos/types";
@@ -25,14 +26,16 @@ import { CategoryManager } from "./CategoryManager";
 import { StockManager } from "./StockManager";
 import { Printer as PrinterPlugin } from "@/plugins/printer";
 import { Preferences } from "@capacitor/preferences";
+import { BackupManager } from "./BackupManager";
 
-type AdminTab = "laporan" | "menu" | "stok" | "kategori" | "akun";
+type AdminTab = "laporan" | "menu" | "stok" | "kategori" | "backup" | "akun";
 
 const ADMIN_NAV: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "laporan", label: "Laporan", icon: BarChart3 },
   { id: "menu", label: "Menu", icon: UtensilsCrossed },
   { id: "stok", label: "Stok", icon: Boxes },
   { id: "kategori", label: "Kategori", icon: Tag },
+  { id: "backup", label: "Backup", icon: DatabaseBackup },
   { id: "akun", label: "Akun", icon: KeyRound },
 ];
 
@@ -50,6 +53,7 @@ interface AdminDashboardProps {
   onAddCategory: (name: string) => boolean;
   onRenameCategory: (oldName: string, newName: string) => void;
   onDeleteCategory: (name: string) => void;
+  onRestoreBackup: (menu: MenuItem[], categories: Category[]) => void;
 }
 
 export function AdminDashboard(props: AdminDashboardProps) {
@@ -111,6 +115,15 @@ export function AdminDashboard(props: AdminDashboardProps) {
           onDelete={props.onDeleteCategory}
         />
       )}
+
+      {tab === "backup" && (
+        <BackupManager
+          menu={props.menu}
+          categories={props.categories}
+          onRestore={props.onRestoreBackup}
+        />
+      )}
+
       {tab === "akun" && <AccountSettings />}
     </div>
   );

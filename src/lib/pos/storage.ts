@@ -133,7 +133,15 @@ export function useMenu() {
     [setMenu],
   );
 
-  return { menu, addItem, updateItem, deleteItem, setStock, adjustStock, decrementStock };
+  /** Replace the entire menu (used by backup restore). */
+  const replaceMenu = useCallback(
+    (items: MenuItem[]) => {
+      setMenu(items);
+    },
+    [setMenu],
+  );
+
+  return { menu, addItem, updateItem, deleteItem, setStock, adjustStock, decrementStock, replaceMenu };
 }
 
 export function useCategories() {
@@ -172,7 +180,15 @@ export function useCategories() {
     [setCategories],
   );
 
-  return { categories, addCategory, renameCategory, deleteCategory };
+  /** Replace all categories (used by backup restore). */
+  const replaceCategories = useCallback(
+    (items: Category[]) => {
+      setCategories(items);
+    },
+    [setCategories],
+  );
+
+  return { categories, addCategory, renameCategory, deleteCategory, replaceCategories };
 }
 
 /** Admin password helpers (stored locally, portable to Capacitor). */

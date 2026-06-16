@@ -1,5 +1,17 @@
+import type { CartLine, MenuItem, MenuVariant } from "./types";
+
 export function formatRupiah(value: number): string {
   return "Rp " + Math.round(value).toLocaleString("id-ID");
+}
+
+/** Effective unit price for an item with an optional selected variant. */
+export function unitPrice(item: MenuItem, variant?: MenuVariant): number {
+  return item.price + (variant?.priceDelta ?? 0);
+}
+
+/** Effective unit price for a cart line. */
+export function lineUnitPrice(line: CartLine): number {
+  return unitPrice(line.item, line.variant);
 }
 
 export function formatNumber(value: number): string {

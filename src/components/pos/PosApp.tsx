@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ClipboardList, LayoutGrid, ShieldCheck } from "lucide-react";
 import logo from "@/assets/logo.png";
-import type { CartLine, MenuItem, Order, PaymentMethod } from "@/lib/pos/types";
-import { formatRupiah } from "@/lib/pos/format";
+import type { CartLine, MenuItem, MenuVariant, Order, PaymentMethod } from "@/lib/pos/types";
+import { formatRupiah, lineUnitPrice } from "@/lib/pos/format";
 import { useCategories, useMenu, useOrders } from "@/lib/pos/storage";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -40,58 +40,65 @@ export function PosApp() {
     setStock,
     adjustStock,
     decrementStock,
+    replaceMenu,
   } = useMenu();
-  const { categories, addCategory, renameCategory, deleteCategory } = useCategories();
+  const { categories, addCategory, renameCategory, deleteCategory, replaceCategories } =
+    useCategories();
 
   const subtotal = useMemo(
-    () => cart.reduce((s, l) => s + l.item.price * l.qty, 0),
+    () => cart.reduce((s, l) => s + lineUnitPrice(l) * l.qty, 0),
     [cart],
   );
   const totalQty = useMemo(() => cart.reduce((s, l) => s + l.qty, 0), [cart]);
   const cartQty = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const l of cart) map[l.item.id] = l.qty;
+    for (const l of cart) map[l.item.id] = (map[l.item.id] ?? 0) + l.qty;
     return map;
   }, [cart]);
 
-  function addItem(item: MenuItem) {
+  function addItem(item: MenuItem, variant?: MenuVariant) {
     const current = menu.find((m) => m.id === item.id) ?? item;
+    const key = variant ? `${item.id}|${variant.id}` : item.id;
     setCart((prev) => {
-      const existing = prev.find((l) => l.item.id === item.id);
-      const inCart = existing?.qty ?? 0;
-      if (current.stock != null && inCart >= current.stock) {
+      const totalForItem = prev
+        .filter((l) => l.item.id === item.id)
+        .reduce((s, l) => s + l.qty, 0);
+      if (current.stock != null && totalForItem >= current.stock) {
         toast.error(`Stok ${current.name} tidak mencukupi`);
         return prev;
       }
+      const existing = prev.find((l) => l.key === key);
       if (existing) {
         return prev.map((l) =>
-          l.item.id === item.id ? { ...l, item: current, qty: l.qty + 1 } : l,
+          l.key === key ? { ...l, item: current, qty: l.qty + 1 } : l,
         );
       }
-      return [...prev, { item: current, qty: 1 }];
+      return [...prev, { key, item: current, variant, qty: 1 }];
     });
   }
 
-  function inc(id: string) {
-    const current = menu.find((m) => m.id === id);
+  function inc(key: string) {
+    setCart((prev) => {
+      const line = prev.find((l) => l.key === key);
+      if (!line) return prev;
+      const current = menu.find((m) => m.id === line.item.id);
+      const totalForItem = prev
+        .filter((l) => l.item.id === line.item.id)
+        .reduce((s, l) => s + l.qty, 0);
+      if (current?.stock != null && totalForItem >= current.stock) {
+        toast.error(`Stok ${line.item.name} tidak mencukupi`);
+        return prev;
+      }
+      return prev.map((l) => (l.key === key ? { ...l, qty: l.qty + 1 } : l));
+    });
+  }
+  function dec(key: string) {
     setCart((prev) =>
-      prev.map((l) => {
-        if (l.item.id !== id) return l;
-        if (current?.stock != null && l.qty >= current.stock) {
-          toast.error(`Stok ${l.item.name} tidak mencukupi`);
-          return l;
-        }
-        return { ...l, qty: l.qty + 1 };
-      }),
+      prev.map((l) => (l.key === key ? { ...l, qty: Math.max(1, l.qty - 1) } : l)),
     );
   }
-  function dec(id: string) {
-    setCart((prev) =>
-      prev.map((l) => (l.item.id === id ? { ...l, qty: Math.max(1, l.qty - 1) } : l)),
-    );
-  }
-  function remove(id: string) {
-    setCart((prev) => prev.filter((l) => l.item.id !== id));
+  function remove(key: string) {
+    setCart((prev) => prev.filter((l) => l.key !== key));
   }
   function clear() {
     setCart([]);
@@ -114,8 +121,8 @@ export function PosApp() {
       createdAt: new Date().toISOString(),
       lines: cart.map((l) => ({
         id: l.item.id,
-        name: l.item.name,
-        price: l.item.price,
+        name: l.variant ? `${l.item.name} (${l.variant.name})` : l.item.name,
+        price: lineUnitPrice(l),
         qty: l.qty,
       })),
       subtotal,
@@ -126,7 +133,13 @@ export function PosApp() {
       customer: data.customer,
     };
     addOrder(order);
-    decrementStock(order.lines.map((l) => ({ id: l.id, qty: l.qty })));
+    const stockLines: { id: string; qty: number }[] = [];
+    for (const l of cart) {
+      const e = stockLines.find((s) => s.id === l.item.id);
+      if (e) e.qty += l.qty;
+      else stockLines.push({ id: l.item.id, qty: l.qty });
+    }
+    decrementStock(stockLines);
     setLastOrder(order);
     setCheckoutOpen(false);
     setReceiptOpen(true);
@@ -213,6 +226,10 @@ export function PosApp() {
               onAddCategory={addCategory}
               onRenameCategory={renameCategory}
               onDeleteCategory={deleteCategory}
+              onRestoreBackup={(m, c) => {
+                replaceMenu(m);
+                replaceCategories(c);
+              }}
             />
           </section>
         )}
