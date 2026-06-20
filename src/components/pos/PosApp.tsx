@@ -182,7 +182,7 @@ export function PosApp() {
       <main className="flex min-h-0 flex-1">
         {tab === "kasir" && (
           <>
-            <section className="min-w-0 flex-1 overflow-hidden p-4 pb-24 lg:pb-4">
+            <section className="min-w-0 flex-1 overflow-hidden p-4 pb-4 lg:pb-4">
               <MenuPanel
                 menu={menu}
                 categories={categories}
@@ -205,13 +205,13 @@ export function PosApp() {
         )}
 
         {tab === "riwayat" && (
-          <section className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
+          <section className="flex-1 overflow-y-auto p-4 pb-4 lg:pb-4">
             <HistoryView orders={orders} onDelete={deleteOrder} />
           </section>
         )}
 
         {tab === "admin" && (
-          <section className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
+          <section className="flex-1 overflow-y-auto p-4 pb-4 lg:pb-4">
             <AdminDashboard
               authed={adminAuthed}
               onAuth={setAdminAuthed}
@@ -239,7 +239,7 @@ export function PosApp() {
       {tab === "kasir" && cart.length > 0 && (
         <button
           onClick={() => setMobileCartOpen(true)}
-          className="fixed inset-x-4 bottom-16 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-[var(--shadow-lift)] lg:hidden"
+          className="fixed inset-x-4 bottom-16 md:bottom-4 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-[var(--shadow-lift)] lg:hidden"
         >
           <span className="flex items-center gap-2 font-semibold">
             <span className="flex size-7 items-center justify-center rounded-full bg-success-foreground/20 text-sm">
