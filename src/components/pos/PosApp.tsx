@@ -45,10 +45,7 @@ export function PosApp() {
   const { categories, addCategory, renameCategory, deleteCategory, replaceCategories } =
     useCategories();
 
-  const subtotal = useMemo(
-    () => cart.reduce((s, l) => s + lineUnitPrice(l) * l.qty, 0),
-    [cart],
-  );
+  const subtotal = useMemo(() => cart.reduce((s, l) => s + lineUnitPrice(l) * l.qty, 0), [cart]);
   const totalQty = useMemo(() => cart.reduce((s, l) => s + l.qty, 0), [cart]);
   const cartQty = useMemo(() => {
     const map: Record<string, number> = {};
@@ -60,18 +57,14 @@ export function PosApp() {
     const current = menu.find((m) => m.id === item.id) ?? item;
     const key = variant ? `${item.id}|${variant.id}` : item.id;
     setCart((prev) => {
-      const totalForItem = prev
-        .filter((l) => l.item.id === item.id)
-        .reduce((s, l) => s + l.qty, 0);
+      const totalForItem = prev.filter((l) => l.item.id === item.id).reduce((s, l) => s + l.qty, 0);
       if (current.stock != null && totalForItem >= current.stock) {
         toast.error(`Stok ${current.name} tidak mencukupi`);
         return prev;
       }
       const existing = prev.find((l) => l.key === key);
       if (existing) {
-        return prev.map((l) =>
-          l.key === key ? { ...l, item: current, qty: l.qty + 1 } : l,
-        );
+        return prev.map((l) => (l.key === key ? { ...l, item: current, qty: l.qty + 1 } : l));
       }
       return [...prev, { key, item: current, variant, qty: 1 }];
     });
@@ -93,9 +86,7 @@ export function PosApp() {
     });
   }
   function dec(key: string) {
-    setCart((prev) =>
-      prev.map((l) => (l.key === key ? { ...l, qty: Math.max(1, l.qty - 1) } : l)),
-    );
+    setCart((prev) => prev.map((l) => (l.key === key ? { ...l, qty: Math.max(1, l.qty - 1) } : l)));
   }
   function remove(key: string) {
     setCart((prev) => prev.filter((l) => l.key !== key));
@@ -148,7 +139,7 @@ export function PosApp() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-background">
+    <div className="flex h-dvh flex-col bg-background">
       {/* Header */}
       <header className="z-20 flex items-center justify-between gap-3 border-b border-border bg-card/80 px-4 py-2.5 backdrop-blur">
         <div className="flex items-center gap-2.5">
@@ -183,14 +174,9 @@ export function PosApp() {
         {tab === "kasir" && (
           <>
             <section className="min-w-0 flex-1 overflow-hidden p-4 pb-24 lg:pb-4">
-              <MenuPanel
-                menu={menu}
-                categories={categories}
-                onAdd={addItem}
-                cartQty={cartQty}
-              />
+              <MenuPanel menu={menu} categories={categories} onAdd={addItem} cartQty={cartQty} />
             </section>
-            <aside className="hidden w-[22rem] shrink-0 border-l border-border bg-card/40 p-4 lg:flex lg:flex-col">
+            <aside className="hidden w-88 shrink-0 border-l border-border bg-card/40 p-4 lg:flex lg:flex-col">
               <CartPanel
                 cart={cart}
                 subtotal={subtotal}
@@ -239,7 +225,7 @@ export function PosApp() {
       {tab === "kasir" && cart.length > 0 && (
         <button
           onClick={() => setMobileCartOpen(true)}
-          className="fixed inset-x-4 bottom-16 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-[var(--shadow-lift)] lg:hidden"
+          className="fixed inset-x-4 bottom-16 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-(--shadow-lift) lg:hidden"
         >
           <span className="flex items-center gap-2 font-semibold">
             <span className="flex size-7 items-center justify-center rounded-full bg-success-foreground/20 text-sm">
@@ -299,4 +285,3 @@ export function PosApp() {
     </div>
   );
 }
-

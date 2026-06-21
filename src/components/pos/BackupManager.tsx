@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { exportBackup as Export } from "@/lib/backup";
 
 const BACKUP_TYPE = "pondok-gedong-menu-backup";
 const BACKUP_VERSION = 1;
@@ -35,7 +36,7 @@ export function BackupManager({ menu, categories, onRestore }: BackupManagerProp
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<BackupShape | null>(null);
 
-  function exportBackup() {
+  async function exportBackup() {
     const data: BackupShape = {
       type: BACKUP_TYPE,
       version: BACKUP_VERSION,
@@ -43,19 +44,8 @@ export function BackupManager({ menu, categories, onRestore }: BackupManagerProp
       menu,
       categories,
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const stamp = new Date().toISOString().slice(0, 10);
-    a.href = url;
-    a.download = `pondok-gedong-menu-${stamp}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Backup menu berhasil diunduh");
+    const fileName = await Export(data);
+    toast.success(`Backup tersimpan: ${fileName}`);
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -85,12 +75,12 @@ export function BackupManager({ menu, categories, onRestore }: BackupManagerProp
       <div>
         <h2 className="font-display text-lg font-bold">Backup &amp; Pulihkan Menu</h2>
         <p className="text-sm text-muted-foreground">
-          Simpan data menu &amp; kategori ke file agar tidak hilang saat aplikasi
-          diperbarui atau dipindahkan ke perangkat lain.
+          Simpan data menu &amp; kategori ke file agar tidak hilang saat aplikasi diperbarui atau
+          dipindahkan ke perangkat lain.
         </p>
       </div>
 
-      <div className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+      <div className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-(--shadow-card)">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="font-semibold">Ekspor Backup</p>
@@ -130,8 +120,8 @@ export function BackupManager({ menu, categories, onRestore }: BackupManagerProp
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Tip: Lakukan ekspor secara berkala. Sebelum memperbarui aplikasi (update
-        APK), ekspor dulu lalu impor kembali setelah update.
+        Tip: Lakukan ekspor secara berkala. Sebelum memperbarui aplikasi (update APK), ekspor dulu
+        lalu impor kembali setelah update.
       </p>
 
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
@@ -141,13 +131,12 @@ export function BackupManager({ menu, categories, onRestore }: BackupManagerProp
             <AlertDialogDescription>
               {pending && (
                 <>
-                  File berisi {pending.menu.length} menu &amp; {pending.categories.length}{" "}
-                  kategori
+                  File berisi {pending.menu.length} menu &amp; {pending.categories.length} kategori
                   {pending.exportedAt
                     ? ` (dibuat ${new Date(pending.exportedAt).toLocaleString("id-ID")})`
                     : ""}
-                  . Seluruh menu &amp; kategori saat ini akan diganti. Tindakan ini
-                  tidak dapat dibatalkan.
+                  . Seluruh menu &amp; kategori saat ini akan diganti. Tindakan ini tidak dapat
+                  dibatalkan.
                 </>
               )}
             </AlertDialogDescription>
