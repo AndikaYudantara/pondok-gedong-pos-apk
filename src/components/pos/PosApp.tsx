@@ -225,7 +225,7 @@ export function PosApp() {
       {tab === "kasir" && cart.length > 0 && (
         <button
           onClick={() => setMobileCartOpen(true)}
-          className="fixed inset-x-4 bottom-16 md:bottom-4 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-[var(--shadow-lift)] lg:hidden"
+          className="fixed inset-x-4 bottom-16 md:bottom-4 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-(--shadow-lift) lg:hidden"
         >
           <span className="flex items-center gap-2 font-semibold">
             <span className="flex size-7 items-center justify-center rounded-full bg-success-foreground/20 text-sm">
@@ -256,7 +256,7 @@ export function PosApp() {
 
       {/* Mobile cart sheet */}
       <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
-        <SheetContent side="bottom" className="h-[85dvh] rounded-t-3xl p-4">
+        <SheetContent side="bottom" className="h-[88dvh] rounded-t-3xl p-4">
           <SheetTitle className="sr-only">Pesanan</SheetTitle>
           <CartPanel
             cart={cart}
@@ -266,6 +266,7 @@ export function PosApp() {
             onRemove={remove}
             onClear={clear}
             onCheckout={openCheckout}
+            embedded
           />
         </SheetContent>
       </Sheet>

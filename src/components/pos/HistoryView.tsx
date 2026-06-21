@@ -3,6 +3,7 @@ import { Clock, Receipt, Trash2 } from "lucide-react";
 import type { Order } from "@/lib/pos/types";
 import { formatDateTime, formatRupiah, formatTime } from "@/lib/pos/format";
 import { Button } from "@/components/ui/button";
+import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,7 @@ interface HistoryViewProps {
 
 export function HistoryView({ orders, onDelete }: HistoryViewProps) {
   const [pendingDelete, setPendingDelete] = useState<Order | null>(null);
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
 
   if (orders.length === 0) {
     return (
@@ -38,7 +40,7 @@ export function HistoryView({ orders, onDelete }: HistoryViewProps) {
         {orders.map((order) => (
           <div
             key={order.id}
-            className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]"
+            className="rounded-2xl border border-border bg-card p-4 shadow-(--shadow-card)"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -80,9 +82,27 @@ export function HistoryView({ orders, onDelete }: HistoryViewProps) {
                 ))}
               </ul>
             </div>
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setReceiptOrder(order)}
+              >
+                <Receipt className="size-4" />
+                Lihat Nota
+              </Button>
+            </div>
           </div>
         ))}
       </div>
+
+      <ReceiptDialog
+        open={!!receiptOrder}
+        onOpenChange={(o) => !o && setReceiptOrder(null)}
+        order={receiptOrder}
+        mode="history"
+      />
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent className="rounded-2xl">
