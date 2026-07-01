@@ -12,11 +12,19 @@ import { toast } from "sonner";
 interface ReceiptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  order: Order | null;
-  onNewOrder: () => void;
+  order: Order | null; /** Called when finishing a fresh checkout. Omit in history mode. */
+  onNewOrder?: () => void;
+  /** "checkout" shows success header + Pesanan Baru, "history" shows close only */
+  mode?: "checkout" | "history";
 }
 
-export function ReceiptDialog({ open, onOpenChange, order, onNewOrder }: ReceiptDialogProps) {
+export function ReceiptDialog({
+  open,
+  onOpenChange,
+  order,
+  onNewOrder,
+  mode = "checkout",
+}: ReceiptDialogProps) {
   if (!order) return null;
 
   const [printing, setPrinting] = useState(false);
@@ -68,13 +76,19 @@ export function ReceiptDialog({ open, onOpenChange, order, onNewOrder }: Receipt
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm rounded-2xl p-0">
-        <div className="flex flex-col items-center gap-2 px-6 pt-7 text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-success/15">
-            <CheckCircle2 className="size-8 text-success" />
+        {mode === "checkout" ? (
+          <div className="flex flex-col items-center gap-2 px-6 pt-7 text-center">
+            <div className="flex size-14 items-center justify-center rounded-full bg-success/15">
+              <CheckCircle2 className="size-8 text-success" />
+            </div>
+            <h2 className="text-lg font-bold">Pembayaran Berhasil</h2>
+            <p className="text-sm text-muted-foreground">Pesanan #{order.number} telah disimpan</p>
           </div>
-          <h2 className="text-lg font-bold">Pembayaran Berhasil</h2>
-          <p className="text-sm text-muted-foreground">Pesanan #{order.number} telah disimpan</p>
-        </div>
+        ) : (
+          <div className="px-6 pt-7 text-center">
+            <h2 className="text-lg font-bold">Nota Pesanan #{order.number}</h2>
+          </div>
+        )}
 
         <div className="mx-6 my-4 rounded-xl border border-dashed border-border bg-secondary/40 p-4 text-sm">
           <div className="text-center">
@@ -137,12 +151,22 @@ export function ReceiptDialog({ open, onOpenChange, order, onNewOrder }: Receipt
             disabled={printing}
           >
             <Printer className="size-4" />
-
-            {printing ? "Mencetak..." : "Cetak"}
+            Cetak
           </Button>
-          <Button variant="default" size="lg" className="flex-1" onClick={onNewOrder}>
-            Pesanan Baru
-          </Button>
+          {mode === "checkout" ? (
+            <Button variant="default" size="lg" className="flex-1" onClick={onNewOrder}>
+              Pesanan Baru
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              size="lg"
+              className="flex-1"
+              onClick={() => onOpenChange(false)}
+            >
+              Tutup
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

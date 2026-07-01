@@ -11,6 +11,8 @@ interface CartPanelProps {
   onRemove: (key: string) => void;
   onClear: () => void;
   onCheckout: () => void;
+  /** When rendered inside the bottom sheet, reserve space for its close button. */
+  embedded?: boolean;
 }
 
 export function CartPanel({
@@ -21,10 +23,11 @@ export function CartPanel({
   onRemove,
   onClear,
   onCheckout,
+  embedded = false,
 }: CartPanelProps) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between px-1 pb-3">
+      <div className={"flex items-center justify-between px-1 pb-3 " + (embedded ? "pr-9" : "")}>
         <h2 className="flex items-center gap-2 text-lg font-bold">
           <ShoppingBag className="size-5 text-primary" />
           Pesanan

@@ -193,7 +193,7 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
         {menu.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-card)]"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-(--shadow-card)"
           >
             <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-secondary text-2xl">
               {item.image ? (
@@ -353,9 +353,7 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
                   <Label htmlFor="m-track" className="cursor-pointer">
                     Lacak Stok
                   </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Kurangi otomatis saat terjual
-                  </p>
+                  <p className="text-xs text-muted-foreground">Kurangi otomatis saat terjual</p>
                 </div>
                 <Switch
                   id="m-track"
@@ -387,7 +385,13 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
                     Selisih harga dari harga dasar (boleh 0 / minus)
                   </p>
                 </div>
-                <Button type="button" variant="secondary" size="sm" className="gap-1.5" onClick={addVariant}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={addVariant}
+                >
                   <Plus className="size-4" /> Varian
                 </Button>
               </div>
@@ -430,7 +434,6 @@ export function MenuManager({ menu, categories, onAdd, onUpdate, onDelete }: Men
               )}
             </div>
           </div>
-
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>

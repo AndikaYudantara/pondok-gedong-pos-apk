@@ -4,12 +4,7 @@ import { type Category, type MenuItem, type MenuVariant } from "@/lib/pos/types"
 import { formatRupiah, unitPrice } from "@/lib/pos/format";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface MenuPanelProps {
   menu: MenuItem[];
@@ -85,8 +80,9 @@ export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) 
               disabled={soldOut || reachedMax}
               onClick={() => handleSelect(item)}
               className={cn(
-                "group relative flex flex-col rounded-2xl border border-border bg-card p-3 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] active:translate-y-0",
-                (soldOut || reachedMax) && "cursor-not-allowed opacity-55 hover:translate-y-0 hover:shadow-[var(--shadow-card)]",
+                "group relative flex flex-col rounded-2xl border border-border bg-card p-3 text-left shadow-(--shadow-card) transition-all hover:-translate-y-0.5 hover:shadow-(--shadow-lift) active:translate-y-0",
+                (soldOut || reachedMax) &&
+                  "cursor-not-allowed opacity-55 hover:translate-y-0 hover:shadow-(--shadow-card)",
               )}
             >
               {qty > 0 && (
@@ -137,7 +133,6 @@ export function MenuPanel({ menu, categories, onAdd, cartQty }: MenuPanelProps) 
             </button>
           );
         })}
-
 
         {items.length === 0 && (
           <div className="col-span-full py-16 text-center text-sm text-muted-foreground">
