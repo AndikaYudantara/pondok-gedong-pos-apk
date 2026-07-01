@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Category, MenuItem, Order } from "./types";
+import type { Category, MenuItem, Order, WifiPackage, WifiSale } from "./types";
 import { MENU } from "./menu";
 import { CATEGORIES } from "./types";
+import { WIFI_PACKAGES } from "./wifi";
 
 const ORDERS_KEY = "pondok-gedong-orders";
 const COUNTER_KEY = "pondok-gedong-order-counter";
 const MENU_KEY = "pondok-gedong-menu";
 const CATEGORIES_KEY = "pondok-gedong-categories";
 const ADMIN_PW_KEY = "pondok-gedong-admin-pw";
+const WIFI_PACKAGES_KEY = "pondok-gedong-wifi-packages";
+const WIFI_SALES_KEY = "pondok-gedong-wifi-sales";
+const WIFI_COUNTER_KEY = "pondok-gedong-wifi-counter";
 
 /** Default admin password (can be changed inside the dashboard). */
 export const DEFAULT_ADMIN_PASSWORD = "admin123";
@@ -189,6 +193,63 @@ export function useCategories() {
   );
 
   return { categories, addCategory, renameCategory, deleteCategory, replaceCategories };
+}
+
+export function useWifiPackages() {
+  const [packages, setPackages] = usePersistedState<WifiPackage[]>(
+    WIFI_PACKAGES_KEY,
+    WIFI_PACKAGES,
+  );
+
+  const addPackage = useCallback(
+    (pkg: Omit<WifiPackage, "id">) => {
+      setPackages((prev) => [...prev, { ...pkg, id: crypto.randomUUID() }]);
+    },
+    [setPackages],
+  );
+
+  const updatePackage = useCallback(
+    (id: string, patch: Partial<WifiPackage>) => {
+      setPackages((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    },
+    [setPackages],
+  );
+
+  const deletePackage = useCallback(
+    (id: string) => {
+      setPackages((prev) => prev.filter((p) => p.id !== id));
+    },
+    [setPackages],
+  );
+
+  return { packages, addPackage, updatePackage, deletePackage };
+}
+
+export function useWifiSales() {
+  const [sales, setSales] = usePersistedState<WifiSale[]>(WIFI_SALES_KEY, []);
+
+  const nextNumber = useCallback(() => {
+    if (typeof window === "undefined") return 1;
+    const current = Number(window.localStorage.getItem(WIFI_COUNTER_KEY) || "0") + 1;
+    window.localStorage.setItem(WIFI_COUNTER_KEY, String(current));
+    return current;
+  }, []);
+
+  const addSale = useCallback(
+    (sale: WifiSale) => {
+      setSales((prev) => [sale, ...prev]);
+    },
+    [setSales],
+  );
+
+  const deleteSale = useCallback(
+    (id: string) => {
+      setSales((prev) => prev.filter((s) => s.id !== id));
+    },
+    [setSales],
+  );
+
+  return { sales, addSale, deleteSale, nextNumber };
 }
 
 /** Admin password helpers (stored locally, portable to Capacitor). */

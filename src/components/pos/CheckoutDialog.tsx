@@ -18,6 +18,8 @@ interface CheckoutDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   total: number;
+  title?: string;
+  confirmLabel?: string;
   onConfirm: (data: {
     payment: PaymentMethod;
     cashReceived?: number;
@@ -26,9 +28,16 @@ interface CheckoutDialogProps {
   }) => void;
 }
 
-const QUICK_AMOUNTS = [10000, 20000, 50000, 100000, 150000];
+const QUICK_AMOUNTS = [20000, 50000, 100000, 150000];
 
-export function CheckoutDialog({ open, onOpenChange, total, onConfirm }: CheckoutDialogProps) {
+export function CheckoutDialog({
+  open,
+  onOpenChange,
+  total,
+  title = "Pembayaran",
+  confirmLabel = "Selesaikan Pesanan",
+  onConfirm,
+}: CheckoutDialogProps) {
   const [payment, setPayment] = useState<PaymentMethod>("Tunai");
   const [cash, setCash] = useState<string>("");
   const [customer, setCustomer] = useState("");
@@ -59,9 +68,10 @@ export function CheckoutDialog({ open, onOpenChange, total, onConfirm }: Checkou
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Pembayaran</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Total tagihan <span className="font-bold text-primary">{formatRupiah(total)}</span>
+            Total tagihan{" "}
+            <span className="font-bold text-primary">{formatRupiah(total)}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -149,7 +159,7 @@ export function CheckoutDialog({ open, onOpenChange, total, onConfirm }: Checkou
             disabled={!canPay}
             onClick={handleConfirm}
           >
-            Selesaikan Pesanan
+            {confirmLabel}
           </Button>
         </div>
       </DialogContent>

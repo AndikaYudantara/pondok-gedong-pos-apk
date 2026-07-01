@@ -55,3 +55,29 @@ export interface Order {
 }
 
 export const CATEGORIES: Category[] = ["Kopi", "Non-Kopi", "Makanan", "Camilan"];
+
+/** A fixed wifi voucher package (price = hours × Rp2.000 by default). */
+export interface WifiPackage {
+  id: string;
+  name: string;
+  /** Duration in hours. */
+  hours: number;
+  price: number;
+}
+
+/** A wifi voucher sale. Kept separate from cafe orders / reports. */
+export interface WifiSale {
+  id: string;
+  number: number;
+  createdAt: string; // ISO
+  packageId: string;
+  packageName: string;
+  hours: number;
+  price: number;
+  /** Generated voucher code (username = password on Mikrotik hotspot). */
+  code: string;
+  payment: PaymentMethod;
+  cashReceived?: number;
+  change?: number;
+  customer?: string;
+}

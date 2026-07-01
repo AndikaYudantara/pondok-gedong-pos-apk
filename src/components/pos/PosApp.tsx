@@ -1,10 +1,25 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, LayoutGrid, ShieldCheck } from "lucide-react";
+import { ClipboardList, LayoutGrid, ShieldCheck, Wifi } from "lucide-react";
 import logo from "@/assets/logo.png";
-import type { CartLine, MenuItem, MenuVariant, Order, PaymentMethod } from "@/lib/pos/types";
+import type {
+  CartLine,
+  MenuItem,
+  MenuVariant,
+  Order,
+  PaymentMethod,
+  WifiPackage,
+  WifiSale,
+} from "@/lib/pos/types";
 import { formatRupiah, lineUnitPrice } from "@/lib/pos/format";
-import { useCategories, useMenu, useOrders } from "@/lib/pos/storage";
+import {
+  useCategories,
+  useMenu,
+  useOrders,
+  useWifiPackages,
+  useWifiSales,
+} from "@/lib/pos/storage";
+import { generateVoucherCode } from "@/lib/pos/wifi";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MenuPanel } from "./MenuPanel";
@@ -13,11 +28,13 @@ import { CheckoutDialog } from "./CheckoutDialog";
 import { ReceiptDialog } from "./ReceiptDialog";
 import { HistoryView } from "./HistoryView";
 import { AdminDashboard } from "./AdminDashboard";
+import { WifiPanel } from "./WifiPanel";
 
-type Tab = "kasir" | "riwayat" | "admin";
+type Tab = "kasir" | "wifi" | "riwayat" | "admin";
 
 const NAV: { id: Tab; label: string; icon: typeof LayoutGrid }[] = [
   { id: "kasir", label: "Kasir", icon: LayoutGrid },
+  { id: "wifi", label: "Wifi", icon: Wifi },
   { id: "riwayat", label: "Riwayat", icon: ClipboardList },
   { id: "admin", label: "Admin", icon: ShieldCheck },
 ];
@@ -44,6 +61,8 @@ export function PosApp() {
   } = useMenu();
   const { categories, addCategory, renameCategory, deleteCategory, replaceCategories } =
     useCategories();
+  const { packages: wifiPackages, addPackage, updatePackage, deletePackage } = useWifiPackages();
+  const { sales: wifiSales, addSale, deleteSale, nextNumber: nextWifiNumber } = useWifiSales();
 
   const subtotal = useMemo(
     () => cart.reduce((s, l) => s + lineUnitPrice(l) * l.qty, 0),
@@ -147,6 +166,34 @@ export function PosApp() {
     toast.success(`Pesanan #${order.number} berhasil disimpan`);
   }
 
+  function sellWifi(
+    pkg: WifiPackage,
+    data: {
+      payment: PaymentMethod;
+      cashReceived?: number;
+      change?: number;
+      customer?: string;
+    },
+  ): WifiSale {
+    const sale: WifiSale = {
+      id: crypto.randomUUID(),
+      number: nextWifiNumber(),
+      createdAt: new Date().toISOString(),
+      packageId: pkg.id,
+      packageName: pkg.name,
+      hours: pkg.hours,
+      price: pkg.price,
+      code: generateVoucherCode(),
+      payment: data.payment,
+      cashReceived: data.cashReceived,
+      change: data.change,
+      customer: data.customer,
+    };
+    addSale(sale);
+    toast.success(`Voucher wifi ${sale.code} berhasil dibuat`);
+    return sale;
+  }
+
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
       {/* Header */}
@@ -204,11 +251,20 @@ export function PosApp() {
           </>
         )}
 
+        {tab === "wifi" && (
+          <section className="flex-1 overflow-y-auto p-4 pb-4 lg:pb-4">
+            <div className="mx-auto w-full max-w-3xl">
+              <WifiPanel packages={wifiPackages} onSell={sellWifi} />
+            </div>
+          </section>
+        )}
+
         {tab === "riwayat" && (
           <section className="flex-1 overflow-y-auto p-4 pb-4 lg:pb-4">
             <HistoryView orders={orders} onDelete={deleteOrder} />
           </section>
         )}
+
 
         {tab === "admin" && (
           <section className="flex-1 overflow-y-auto p-4 pb-4 lg:pb-4">
@@ -230,6 +286,12 @@ export function PosApp() {
                 replaceMenu(m);
                 replaceCategories(c);
               }}
+              wifiSales={wifiSales}
+              wifiPackages={wifiPackages}
+              onAddWifiPackage={addPackage}
+              onUpdateWifiPackage={updatePackage}
+              onDeleteWifiPackage={deletePackage}
+              onDeleteWifiSale={deleteSale}
             />
           </section>
         )}
@@ -239,7 +301,7 @@ export function PosApp() {
       {tab === "kasir" && cart.length > 0 && (
         <button
           onClick={() => setMobileCartOpen(true)}
-          className="fixed inset-x-4 bottom-16 md:bottom-4 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-[var(--shadow-lift)] lg:hidden"
+          className="fixed inset-x-4 bottom-16 z-30 flex items-center justify-between rounded-2xl bg-success px-5 py-3.5 text-success-foreground shadow-[var(--shadow-lift)] lg:hidden"
         >
           <span className="flex items-center gap-2 font-semibold">
             <span className="flex size-7 items-center justify-center rounded-full bg-success-foreground/20 text-sm">
@@ -270,7 +332,7 @@ export function PosApp() {
 
       {/* Mobile cart sheet */}
       <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
-        <SheetContent side="bottom" className="h-[85dvh] rounded-t-3xl p-4">
+        <SheetContent side="bottom" className="h-[88dvh] rounded-t-3xl p-4">
           <SheetTitle className="sr-only">Pesanan</SheetTitle>
           <CartPanel
             cart={cart}
@@ -299,4 +361,3 @@ export function PosApp() {
     </div>
   );
 }
-

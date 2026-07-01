@@ -44,3 +44,25 @@ export function isSameDay(iso: string, ref: Date): boolean {
     d.getFullYear() === ref.getFullYear()
   );
 }
+
+export function isSameMonth(iso: string, ref: Date): boolean {
+  const d = new Date(iso);
+  return d.getMonth() === ref.getMonth() && d.getFullYear() === ref.getFullYear();
+}
+
+export function formatDate(ref: Date): string {
+  return ref.toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** YYYY-MM-DD in local time, for <input type="date">. */
+export function toDateInputValue(ref: Date): string {
+  const y = ref.getFullYear();
+  const m = String(ref.getMonth() + 1).padStart(2, "0");
+  const d = String(ref.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
